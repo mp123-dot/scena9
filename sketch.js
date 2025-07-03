@@ -11,11 +11,11 @@ let selectedMessage;
 let giftDisplayWidth;
 let giftDisplayHeight;
 
-let song; // ← nowa zmienna na muzykę
+let song;
 
 function preload() {
-  soundFormats('mp3'); // ← wymagane dla .mp3
-  song = loadSound("oops i did it again.mp3"); // ← załaduj piosenkę
+  soundFormats('mp3');
+  song = loadSound("oops i did it again.mp3");
 
   backgroundImage = loadImage("t.podsumowanie.png");
 
@@ -26,49 +26,68 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(900, 600);
+  createCanvas(windowWidth, windowHeight);
   imageMode(CENTER);
   textAlign(LEFT, TOP);
   textSize(16);
   textStyle(ITALIC);
   fill(255);
 
-  let index = floor(random(giftImages.length));
-  selectedGift = giftImages[index];
-  selectedMessage = giftMessages[index];
+  // losujemy gif i wiadomość
+  let idx = floor(random(giftImages.length));
+  selectedGift = giftImages[idx];
+  selectedMessage = giftMessages[idx];
 
-  let targetWidth = width / 5;
-  let scaleFactor = (targetWidth / selectedGift.width) * 1.5;
-
-  giftDisplayWidth = selectedGift.width * scaleFactor;
-  giftDisplayHeight = selectedGift.height * scaleFactor;
+  computeGiftSize();
 
   if (!song.isPlaying()) {
-    song.play(); // ← odtwórz piosenkę po starcie
+    song.play();
   }
 }
 
 function draw() {
   background(0);
-  image(backgroundImage, width / 2, height / 2, width, height);
+  // tło na cały ekran
+  image(backgroundImage, windowWidth/2, windowHeight/2, windowWidth, windowHeight);
 
-  // Rysowanie gifa
-  image(selectedGift, width / 2, height / 2 - 50, giftDisplayWidth, giftDisplayHeight);
+  // gif wyśrodkowany
+  image(
+    selectedGift,
+    windowWidth/2,
+    windowHeight/2 - 50 * (windowHeight / 600), // skaluje "odstęp" w pionie proporcjonalnie
+    giftDisplayWidth,
+    giftDisplayHeight
+  );
 
-  // Pozycja tekstu — 1 cm (~38 px) poniżej dolnej krawędzi gifa
-  let textBoxWidth = width / 3.5;
-  let textX = width / 2 - textBoxWidth / 2;
-  let textY = height / 2 - 50 + giftDisplayHeight / 2 + 15;
+  // obliczamy pozycję tekstu pod gifem
+  let boxW = windowWidth / 3.5;
+  let textX = windowWidth/2 - boxW/2;
+  // y-koordynata: środek + połowa gifa + mały margines
+  let textY = windowHeight/2 - 50*(windowHeight/600) + giftDisplayHeight/2 + 15;
 
-  drawJustifiedText(selectedMessage, textX, textY, textBoxWidth, 24);
+  drawJustifiedText(selectedMessage, textX, textY, boxW, 24);
+}
+
+// dopasowanie rozmiaru gifa do aktualnego okna
+function computeGiftSize() {
+  let targetW = windowWidth / 5;
+  let scaleFactor = (targetW / selectedGift.width) * 1.5;
+  giftDisplayWidth = selectedGift.width * scaleFactor;
+  giftDisplayHeight = selectedGift.height * scaleFactor;
+}
+
+// reagujemy na zmianę rozmiaru okna
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  computeGiftSize();
 }
 
 function drawJustifiedText(txt, x, y, boxWidth, lineHeight) {
   let words = txt.split(' ');
   let line = '';
   let lines = [];
-  fill(0);
 
+  fill(255); // biały tekst
   for (let i = 0; i < words.length; i++) {
     let testLine = line + words[i] + ' ';
     let testWidth = textWidth(testLine);
@@ -82,25 +101,21 @@ function drawJustifiedText(txt, x, y, boxWidth, lineHeight) {
   lines.push(line.trim());
 
   for (let i = 0; i < lines.length; i++) {
-    let currentLine = lines[i];
-    let isLastLine = (i === lines.length - 1);
-    if (isLastLine) {
-      text(currentLine, x, y + i * lineHeight);
+    let current = lines[i];
+    let isLast = (i === lines.length - 1);
+    if (isLast) {
+      text(current, x, y + i * lineHeight);
     } else {
-      let wordsInLine = currentLine.split(' ');
-      let totalWords = wordsInLine.length;
-      let lineStripped = currentLine.replace(/\s+/g, '');
-      let lineWidth = textWidth(lineStripped);
-      let spaceWidth = (boxWidth - lineWidth) / (totalWords - 1);
-
-      let xOffset = x;
-      for (let w = 0; w < wordsInLine.length; w++) {
-        text(wordsInLine[w], xOffset, y + i * lineHeight);
-        xOffset += textWidth(wordsInLine[w]) + spaceWidth;
+      let parts = current.split(' ');
+      let totalWords = parts.length;
+      let stripped = current.replace(/\s+/g, '');
+      let w = textWidth(stripped);
+      let space = (boxWidth - w) / (totalWords - 1);
+      let xOff = x;
+      for (let wIdx = 0; wIdx < parts.length; wIdx++) {
+        text(parts[wIdx], xOff, y + i * lineHeight);
+        xOff += textWidth(parts[wIdx]) + space;
       }
     }
   }
 }
-
-
-
