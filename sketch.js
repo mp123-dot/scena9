@@ -87,7 +87,7 @@ function drawJustifiedText(txt, x, y, boxWidth, lineHeight) {
   let line = '';
   let lines = [];
 
-  fill(255); // biały tekst
+  fill(0); // czarny tekst
   for (let i = 0; i < words.length; i++) {
     let testLine = line + words[i] + ' ';
     let testWidth = textWidth(testLine);
